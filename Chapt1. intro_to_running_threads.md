@@ -49,3 +49,26 @@ Even though we have been using Lambdas in the above example in various ways, it 
 We can use (a copy of) the closure (i.e. f0, f1, …) to execute the code within the Lambda at a position in our program different to the line where the function object was created.
 
 The parameter list () : The way parameters are passed to a Lambda is basically identical to calling a regular function. If the Lambda takes no arguments, these parentheses can be omitted (except when "mutable" is used).
+
+## Fork-Join Parallelism
+Using threads follows a basic concept called "fork-join-parallelism". The basic mechanism of this concept follows a simple three-step pattern:
+
+-  Split the flow of execution into a parallel thread ("fork")
+-  Perform some work in both the main thread and the parallel thread
+-  Wait for the parallel thread to finish and unite the split flow of execution again ("join")
+The following diagram illustrates the basic idea of forking:
+
+![text not here](images/thread5.png)
+
+In the main thread, the program flow is forked into three parallel branches. In both worker branches, some work is performed - which is why threads are often referred to as "worker threads". Once the work is completed, the flow of execution is united again in the main function using the join() command. In this example, join acts as a barrier where all threads are united. The execution of main is in fact halted, until both worker threads have successfully completed their respective work.
+
+By pushing the thread object into the vector, we attempt to make a copy of it. However, thread objects do not have a copy constructor and thus can not be duplicated. If this were possible, we would create yet another branch in the flow of execution - which is not what we want. The solution to this problem is to use **move** semantics, which provide a convenient way for the contents of objects to be 'moved' between objects, rather than copied. It might be a good idea at this point to refresh your knowledge on move semantics, on rvalues and lvalues as well as on rvalue references, as we will make use of these concepts throughout the course.
+If you want to move an lvalue for example, we can call std::move.
+
+To solve our problem, we can use the function emplace_back() instead of push_back(), which internally uses move semantics to move our thread object into the vector without making a copy. 
+
+## two important properties of concurrent programs:
+
+-  The order in which threads are executed is non-deterministic. Every time a program is executed, there is a chance for a completely different order of execution.
+-  Threads may get preempted in the middle of execution and another thread may be selected to run.
+These two properties pose a major problem with concurrent applications: A program may run correctly for 
