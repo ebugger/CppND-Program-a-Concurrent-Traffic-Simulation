@@ -396,6 +396,7 @@ One of the primary sources of error in concurrent programming are data races. Th
 The following diagram illustrates the principle: One thread wants to increment a variable x, whereas the other thread wants to print the same variable. Depending on the timing of the program and thus the order of execution, the printed result might change each time the program is executed.
 
 ![no text](images/Race.png)
+
 In this example, one safe way of passing data to a thread would be to carefully synchronize the two threads using either join() or the promise-future concept that can guarantee the availability of a result. Data races are always to be avoided. Even if nothing bad seems to happen, they are a bug and should always be treated as such. Another possible solution for the above example would be to make a copy of the original argument and pass the copy to the thread, thereby preventing the data race.
 
 ## Passing data to a thread by value
