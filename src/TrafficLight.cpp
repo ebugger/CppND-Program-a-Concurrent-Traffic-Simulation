@@ -97,15 +97,14 @@ void TrafficLight::cycleThroughPhases()
             }else {
                 _currentPhase = TrafficLightPhase::green;
             }
+            futures.emplace_back(std::async(std::launch::async, &MessageQueue<TrafficLightPhase>::send, _queue, std::move(_currentPhase)));
+            //_queue.send(std::move(_currentPhase)) if not shared ptr used, or 
+            //auto sentFuture = std::async(std::launch::async, &MessageQueue<TrafficLightPhase>::send,&_queue,std::move(_currentPhase));
+            //sentFuture.wait();
+            cycleDuration = std::chrono::milliseconds((rand() % 2001) + 4000);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            lastUpdate = std::chrono::system_clock::now();            
         }
-
-        futures.emplace_back(std::async(std::launch::async, &MessageQueue<TrafficLightPhase>::send, _queue, std::move(_currentPhase)));
-        //_queue.send(std::move(_currentPhase)) if not shared ptr used, or 
-        //auto sentFuture = std::async(std::launch::async, &MessageQueue<TrafficLightPhase>::send,&_queue,std::move(_currentPhase));
-        //sentFuture.wait();
-        cycleDuration = std::chrono::milliseconds((rand() % 2001) + 4000);
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        lastUpdate = std::chrono::system_clock::now();
     }
     std::for_each(futures.begin(), futures.begin(), [](std::future<void> &ftr) { ftr.wait(); });
 }
