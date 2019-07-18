@@ -53,8 +53,11 @@ void TrafficLight::waitForGreen()
     // FP.5b : add the implementation of the method waitForGreen, in which an infinite while-loop 
     // runs and repeatedly calls the receive function on the message queue. 
     // Once it receives TrafficLightPhase::green, the method returns.
-    while(_queue->receive() != TrafficLightPhase::green);
-    return;
+    while(true) {
+        if(_queue->receive() == TrafficLightPhase::green)
+            return;
+    }
+    //return;
 }
 
 TrafficLightPhase TrafficLight::getCurrentPhase()
@@ -80,23 +83,29 @@ void TrafficLight::cycleThroughPhases()
     std::vector<std::future<void>> futures; 
     srand(time(NULL)) ;
 
+    std::chrono::time_point<std::chrono::system_clock> lastUpdate = std::chrono::system_clock::now();
+    auto cycleDuration = std::chrono::milliseconds((rand() % 2001) + 4000);
+
     while (true) {
-
-        int randNum = (rand() * 1.0 / RAND_MAX * 3) + 4;
-        std::chrono::seconds _interval( randNum );
-        std::this_thread::sleep_for(_interval);
-
-        if (_currentPhase == TrafficLightPhase::green) {
-            _currentPhase = TrafficLightPhase::red;
-        }else {
-            _currentPhase = TrafficLightPhase::green;
+        int lastUpdatedTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - lastUpdate).count();
+        //int randNum = (rand() * 1.0 / RAND_MAX * 3) + 4;
+        //std::chrono::seconds _interval( randNum );
+        //std::this_thread::sleep_for(_interval);
+        if(lastUpdatedTime >= cycleDuration.count()) {
+            if (_currentPhase == TrafficLightPhase::green) {
+                _currentPhase = TrafficLightPhase::red;
+            }else {
+                _currentPhase = TrafficLightPhase::green;
+            }
         }
 
         futures.emplace_back(std::async(std::launch::async, &MessageQueue<TrafficLightPhase>::send, _queue, std::move(_currentPhase)));
         //_queue.send(std::move(_currentPhase)) if not shared ptr used, or 
         //auto sentFuture = std::async(std::launch::async, &MessageQueue<TrafficLightPhase>::send,&_queue,std::move(_currentPhase));
         //sentFuture.wait();
+        cycleDuration = std::chrono::milliseconds((rand() % 2001) + 4000);
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        lastUpdate = std::chrono::system_clock::now();
     }
     std::for_each(futures.begin(), futures.begin(), [](std::future<void> &ftr) { ftr.wait(); });
 }
